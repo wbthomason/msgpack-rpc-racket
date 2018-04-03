@@ -40,7 +40,7 @@
   (send client sync-notify method args))
 
 ;; Client management
-(define (start-client addr [port-num nil] [conn-type "unix"])
+(define (start-client addr [port-num null] [conn-type "unix"])
   (let ([client (new rpc-client% [address addr] [port-num port-num] [connection-type conn-type])])
     (send client start)
     client))
@@ -53,15 +53,15 @@
 ;;; TODO Error checking & exceptions
 (define rpc-client%
   (class object%
-         (init-field address [port-num nil] [connection-type "unix"])
+         (init-field address [port-num null] [connection-type "unix"])
          (super-new)
          (define next-id-num 0)
-         (define loop nil)
+         (define loop null)
          (define pending-requests (make-hash))
          (define client-cust (make-custodian))
-         ;;; Initialized as nil so that the custodian can manage them
-         (define in nil)
-         (define out nil)
+         ;;; Initialized as null so that the custodian can manage them
+         (define in null)
+         (define out null)
          ;;; Generate next valid 32-bit integer msgid
          (define/private (next-id) (if (< next-id-num (sub1 (expt 2 32))) (add1 next-id-num) 0))
          (define/public (stop) (custodian-shutdown-all client-cust))
