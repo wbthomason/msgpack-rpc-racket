@@ -1,6 +1,9 @@
 #lang racket
 
-(require racket/unix-socket msgpack)
+(require racket/async-channel
+         racket/tcp
+         racket/unix-socket
+         msgpack)
 
 (provide start-client
          stop-client
@@ -10,31 +13,32 @@
 ;; Datatypes and internal constructors
 (struct request (type msgid method params))
 ;;; TODO Right now, this will fail if given non-Packable types
-(define (make-request msgid method params)
-  (let  ([data #(0 msgid method params)])
-    (call-with-output-bytes (lambda (out) (pack data out)))))
+(define (make-request out-chan msgid method params)
+  (let ([data (vector 0 msgid method (list->vector params))])
+    (pack data out-chan)))
 
 (struct response (type msgid err result))
 ;;; We assume that the server only gives us good responses, which is almost certainly a terrible
 ;;; idea
 (define (make-response-handler cust)
   (parameterize ([current-custodian cust])
-                (let ([callback-channel (make-channel)])
+                (let ([callback-channel (make-async-channel)])
                   (define (response-handler data)
                     (match data
-                           [(response 1 msgid err result) (channel-put callback-channel (values err result))]))
-                  response-handler)))
+                           [(vector 1 msgid err result) (async-channel-put callback-channel
+                                                                           (lambda ()  (values err result)))]))
+                  (values callback-channel response-handler))))
 
 (struct notify (type method params))
 (define (make-notify method params)
-  (let ([data #(2 method params)])
+  (let ([data (vector 2 method params)])
     (call-with-output-bytes (lambda (out) (pack data out)))))
 
 ;; Making a call
 (define (rpc-call client method [sync? #t] . args)
   (match sync?
-    [#t (send client sync-call method args)]
-    [#f (send client async-call method args)]))
+         [#t (send client sync-call method args)]
+         [#f (send client async-call method args)]))
 
 (define (rpc-notify client method . args)
   (send client sync-notify method args))
@@ -63,7 +67,7 @@
          (define in null)
          (define out null)
          ;;; Generate next valid 32-bit integer msgid
-         (define/private (next-id) (if (< next-id-num (sub1 (expt 2 32))) (add1 next-id-num) 0))
+         (define/private (next-id) (set! next-id-num (if (< next-id-num (sub1 (expt 2 32))) (add1 next-id-num) 0)))
          (define/public (stop) (custodian-shutdown-all client-cust))
          ;;; TODO Check address+port for validity for given connection method
          ;;; TODO UDP support
@@ -80,25 +84,24 @@
                          (set! loop
                                (thread
                                  (lambda ()
-                                   (let loop ()
-                                     (sync
-                                       (handle-evt in
-                                                   ;;; We assume that the client only ever gets responses back. This is
-                                                   ;;; maybe a bad assumption
-                                                   (lambda (evt) (dispatch-response (unpack evt)))))
-                                     (loop)))))))
+                                   (let callback-loop ()
+                                     (sync (handle-evt in
+                                                       ;;; We assume that the client only ever gets responses back. This is
+                                                       ;;; maybe a bad assumption
+                                                       (lambda (evt) (dispatch-response (unpack evt)))))
+                                     (callback-loop)))))))
          (define/private (dispatch-response data)
            ((hash-ref pending-requests (vector-ref data 1)) data))
          (define/private (send-request method args)
-           (let-values ([(request-bytes) (make-request next-id-num method args)]
-                        [(callback-channel callback-handler) (make-response-handler client-cust)])
+           (let-values ([(callback-channel callback-handler) (make-response-handler client-cust)])
              (hash-set! pending-requests next-id-num callback-handler)
+             (make-request out next-id-num method args)
+             (flush-output out)
              (next-id)
-             (display request-bytes out)
              callback-channel))
          (define/public (sync-call method args)
            (let ([callback-channel (send-request method args)])
-             (channel-get callback-channel)))
+             (async-channel-get callback-channel)))
          (define/public (async-call method args)
            (let ([callback-channel (send-request method args)])
              callback-channel))
