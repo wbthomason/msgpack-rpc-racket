@@ -23,8 +23,7 @@
                 (let ([callback-channel (make-async-channel)])
                   (define (response-handler data)
                     (match data
-                           [(vector 1 msgid err result) (async-channel-put callback-channel
-                                                                           (lambda ()  (values err result)))]))
+                           [(vector 1 msgid err result) (async-channel-put callback-channel (list err result))]))
                   (values callback-channel response-handler))))
 
 (define (make-notify out-chan method params)
@@ -32,7 +31,7 @@
     (pack data out-chan)))
 
 ;; Making a call
-(define (rpc-call client method [sync? #t] . args)
+(define (rpc-call client method #:sync? [sync? #t] . args)
   (match sync?
          [#t (send client sync-call method args)]
          [#f (send client async-call method args)]))
@@ -52,6 +51,7 @@
 ;; The RPC Client class
 ;;; TODO All methods that require the client to be started should check that it has been started
 ;;; TODO Error checking & exceptions
+;;; TODO Thread safety
 (define rpc-client%
   (class object%
          (init-field address [port-num null] [connection-type "unix"])
