@@ -10,14 +10,12 @@
          rpc-call
          rpc-notify)
 
-;; Datatypes and internal constructors
-(struct request (type msgid method params))
-;;; TODO Right now, this will fail if given non-Packable types
+;; Message encoders. See the msgpack-rpc spec for explanations of the data layout and magic numbers
+;;; TODO Right now, these will fail if given non-Packable types
 (define (make-request out-chan msgid method params)
   (let ([data (vector 0 msgid method (list->vector params))])
     (pack data out-chan)))
 
-(struct response (type msgid err result))
 ;;; We assume that the server only gives us good responses, which is almost certainly a terrible
 ;;; idea
 (define (make-response-handler cust)
@@ -29,10 +27,9 @@
                                                                            (lambda ()  (values err result)))]))
                   (values callback-channel response-handler))))
 
-(struct notify (type method params))
-(define (make-notify method params)
-  (let ([data (vector 2 method params)])
-    (call-with-output-bytes (lambda (out) (pack data out)))))
+(define (make-notify out-chan method params)
+  (let ([data (vector 2 method (list->vector params))])
+    (pack data out-chan)))
 
 ;; Making a call
 (define (rpc-call client method [sync? #t] . args)
@@ -106,4 +103,5 @@
            (let ([callback-channel (send-request method args)])
              callback-channel))
          (define/public (sync-notify method args)
-           (display (make-notify method args) out))))
+           (make-notify out method args)
+           (flush-output out))))
