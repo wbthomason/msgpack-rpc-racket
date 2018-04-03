@@ -1,6 +1,6 @@
 #lang racket
 
-(require msgpack)
+(require racket/unix-socket msgpack)
 
 (provide start-client
          stop-client
