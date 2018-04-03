@@ -1,9 +1,9 @@
 #lang scribble/manual
 @require[@for-label[msgpack-rpc
-                    racket/base]]
+                    racket]]
 
 @title{msgpack-rpc}
-@author{wil}
+@author{wbthomason}
 
 @defmodule[msgpack-rpc]
 
