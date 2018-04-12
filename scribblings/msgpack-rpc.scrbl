@@ -1,5 +1,5 @@
 #lang scribble/manual
-@(require scribble/example (for-label msgpack-rpc msgpack racket))
+@(require scribble/example (for-label racket msgpack-rpc msgpack))
 
 @title{MessagePack-RPC Client for Racket}
 @author[@author+email["Wil Thomason" "wbthomason@cs.cornell.edu"]]
@@ -33,9 +33,6 @@ operations.
 
 @subsection[#:tag "client-create"]{Client Creation}
 Here we show how to connect using TCP to a server running at port 5781 on localhost.
-@(examples
-  #:label '()
-  (start-client "127.0.0.1" 5781 "tcp"))
 @subsection[#:tag "client-shutdown"]{Client Shutdown}
 @subsection[#:tag "sync-call"]{Synchronous Calls}
 @subsection[#:tag "async-call"]{Asynchronous Calls}
@@ -43,7 +40,25 @@ Here we show how to connect using TCP to a server running at port 5781 on localh
 
 @section{API}
 
-@defproc[(start-client [addr string?] [
+@defproc[(start-client [addr string?] [port-num exact-positive-integer? null] [conn-type string?
+"unix"]) (class?)]{Constructs a client and opens a connection to the
+specified RPC server.}
+
+@defproc[(stop-client [client (is-a? rpc-client%)]) any]{Stops a client's event loop and closes
+its connection.}
+
+@defproc[(rpc-call [client (is-a? rpc-client%)] [method string?] [#:sync? boolean? #t] [args any]
+...) any]{Make a call to the method specified by @racket[method] on the RPC server @racket[client]
+is connected to, with the arguments given in @racket[args]. If @racket[#:sync] is @racket[#t], block
+until the call returns, then return @racket['(err result)], reporting any errors in the call and the
+result, if any, of the call. If @racket[#:sync] is @racket[#f], do not block, and immediately return
+the @racket[async-channel] which will contain the call results in the same @racket['(err result)]
+format as before when the call returns.}
+
+@defproc[(rpc-notify [client (is-a? rpc-client%)] [method string?] [args any]
+...) any]{Send a notification to the method specified by @racket[method] on the RPC server
+@racket[client] is connected to, with the arguments given in @racket[args]. A notification is
+essentially a call that expects no result in return.}
 
 @section{Warnings}
 
