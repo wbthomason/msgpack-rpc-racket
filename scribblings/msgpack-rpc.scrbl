@@ -33,10 +33,20 @@ operations.
 
 @subsection[#:tag "client-create"]{Client Creation}
 Here we show how to connect using TCP to a server running at port 5781 on localhost.
-@subsection[#:tag "client-shutdown"]{Client Shutdown}
+
 @subsection[#:tag "sync-call"]{Synchronous Calls}
+Next, we'll make a synchronous call to a method named @racket["plusone"] with the argument
+@racket[4], and check the result.
+
 @subsection[#:tag "async-call"]{Asynchronous Calls}
+Now we'll make the same call, but asynchronously.
+
 @subsection[#:tag "notify"]{Notifications}
+Next, we'll send a notification to the method @racket["sayhi"] with an argument
+@racket["Racket"].
+
+@subsection[#:tag "client-shutdown"]{Client Shutdown}
+And, finally, we'll shut down the client we've been using.
 
 @section{API}
 
