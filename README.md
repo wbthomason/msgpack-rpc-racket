@@ -4,7 +4,8 @@ A `msgpack-rpc` client in Racket. Server (maybe?) forthcoming
 
 ## How to use
 
-TODO
+See [the Racket library docs](https://docs.racket-lang.org/msgpack-rpc/index.html) for usage
+examples and API documentation.
 
 ## Caveats/Status
 
