@@ -1,5 +1,5 @@
 #lang scribble/manual
-@(require scribble/example (for-label racket msgpack-rpc msgpack))
+@(require scribble/eval (for-label racket msgpack-rpc msgpack))
 
 @title{MessagePack-RPC Client for Racket}
 @author[@author+email["Wil Thomason" "wbthomason@cs.cornell.edu"]]
