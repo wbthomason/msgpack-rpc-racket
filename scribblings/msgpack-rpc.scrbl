@@ -1,5 +1,5 @@
 #lang scribble/manual
-@(require scribble/eval (for-label racket msgpack-rpc msgpack))
+@(require scribble/example (for-label racket msgpack-rpc msgpack))
 
 @title{MessagePack-RPC Client for Racket}
 @author[@author+email["Wil Thomason" "wbthomason@cs.cornell.edu"]]
@@ -31,46 +31,29 @@ The basic usage flow for the library is: Create a client connected to some Messa
 Perform a sequence of calls using the client. Shut down the client. Below are examples of these
 operations.
 
-@(define usage-eval (make-base-eval))
-@interaction-eval[#:eval usage-eval (require msgpack-rpc)]
-
 @subsection[#:tag "client-create"]{Client Creation}
 Here we show how to connect using TCP to a server running at port 5781 on localhost.
-@(examples
-  #:label #f
-  #:eval usage-eval
-  (define client (start-client "127.0.0.1" 5781 "tcp")))
+@(racketblock (define client (start-client "127.0.0.1" 5781 "tcp")))
 
 @subsection[#:tag "sync-call"]{Synchronous Calls}
 Next, we'll make a synchronous call to a method named @racket["plusone"] with the argument
 @racket[4], and check the result.
-@(examples
-  #:label #f
-  #:eval usage-eval
-  (let-values ([(err result) (rpc-call client "plusone" 4)])))
+@(racketblock (let-values ([(err result) (rpc-call client "plusone" 4)])))
 
 @subsection[#:tag "async-call"]{Asynchronous Calls}
 Now we'll make the same call, but asynchronously.
-@(examples
-  #:label #f
-  #:eval usage-eval
+@(racketblock
   (define chan ((rpc-call client "plusone" 4 #:sync? #f)))
   (let-values ([(err result) (async-channel-get chan)])))
 
 @subsection[#:tag "notify"]{Notifications}
 Next, we'll send a notification to the method @racket["sayhi"] with an argument
 @racket["Racket"].
-@(examples
-  #:label #f
-  #:eval usage-eval
-  (rpc-notify client "sayhi" "Racket"))
+@(racketblock (rpc-notify client "sayhi" "Racket"))
 
 @subsection[#:tag "client-shutdown"]{Client Shutdown}
 And, finally, we'll shut down the client we've been using.
-@(examples
-  #:label #f
-  #:eval usage-eval
-  (stop-client client))
+@(racketblock (stop-client client))
 
 @section{API}
 
