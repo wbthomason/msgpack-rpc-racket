@@ -38,13 +38,19 @@ Here we show how to connect using TCP to a server running at port 5781 on localh
 @subsection[#:tag "sync-call"]{Synchronous Calls}
 Next, we'll make a synchronous call to a method named @racket["plusone"] with the argument
 @racket[4], and check the result.
-@(racketblock (let-values ([(err result) (rpc-call client "plusone" 4)])))
+@(racketblock (match-let ([(list err result) (rpc-call client "plusone" 4)])
+                         (if (not (void? err))
+                             (printf "Got error: ~a\n" err)
+                             (printf "Got result: ~a\n" result))))
 
 @subsection[#:tag "async-call"]{Asynchronous Calls}
 Now we'll make the same call, but asynchronously.
 @(racketblock
-  (define chan ((rpc-call client "plusone" 4 #:sync? #f)))
-  (let-values ([(err result) (async-channel-get chan)])))
+  (define chan (rpc-call client "plusone" 4 #:sync? #f))
+  (match-let ([(list err result) (async-channel-get chan)])
+                         (if (not (void? err))
+                             (printf "Got error: ~a\n" err)
+                             (printf "Got result: ~a\n" result))))
 
 @subsection[#:tag "notify"]{Notifications}
 Next, we'll send a notification to the method @racket["sayhi"] with an argument
@@ -67,9 +73,9 @@ its connection.}
 @defproc[(rpc-call [client (is-a? rpc-client%)] [method string?] [#:sync? boolean? #t] [args any]
 ...) any]{Make a call to the method specified by @racket[method] on the RPC server @racket[client]
 is connected to, with the arguments given in @racket[args]. If @racket[#:sync] is @racket[#t], block
-until the call returns, then return @racket['(err result)], reporting any errors in the call and the
+until the call returns, then return @racket[(list err result)], reporting any errors in the call and the
 result, if any, of the call. If @racket[#:sync] is @racket[#f], do not block, and immediately return
-the @racket[async-channel] which will contain the call results in the same @racket['(err result)]
+the @racket[async-channel] which will contain the call results in the same @racket[(list err result)]
 format as before when the call returns.}
 
 @defproc[(rpc-notify [client (is-a? rpc-client%)] [method string?] [args any]
