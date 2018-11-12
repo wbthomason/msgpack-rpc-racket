@@ -14,7 +14,7 @@
 ;;; TODO Right now, these will fail if given non-Packable types
 (define (make-request out-chan msgid method params)
   (let ([data (vector 0 msgid method (list->vector params))])
-    (pack data out-chan)))
+    (pack-to out-chan data)))
 
 ;;; We assume that the server only gives us good responses, which is almost certainly a terrible
 ;;; idea
@@ -28,7 +28,7 @@
 
 (define (make-notify out-chan method params)
   (let ([data (vector 2 method (list->vector params))])
-    (pack data out-chan)))
+    (pack-to out-chan data)))
 
 ;; Making a call
 (define (rpc-call client method #:sync? [sync? #t] . args)
@@ -85,7 +85,7 @@
                                      (sync (handle-evt in
                                                        ;;; We assume that the client only ever gets responses back. This is
                                                        ;;; maybe a bad assumption
-                                                       (lambda (evt) (dispatch-response (unpack evt)))))
+                                                       (lambda (evt) (dispatch-response (unpack-from evt)))))
                                      (callback-loop)))))))
          (define/private (dispatch-response data)
            ((hash-ref pending-requests (vector-ref data 1)) data))
