@@ -1,6 +1,6 @@
 # msgpack-rpc
 
-A `msgpack-rpc` client in Racket. Server (maybe?) forthcoming
+A `msgpack-rpc` client in Racket.
 
 ## How to use
 
